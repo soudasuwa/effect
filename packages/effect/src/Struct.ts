@@ -176,6 +176,89 @@ export const evolve: {
   }
 )
 
+type Mapped<T extends Record<string, (arg: any) => any>> =
+	& unknown
+	& { [K in keyof T]: T[K] extends (arg: any) => infer R ? R : never }
+
+type MapInput<T extends Record<string, (arg: any) => any>> =
+	T[keyof T] extends (arg: infer A) => any ? A : never
+
+/**
+ * Applies a struct of functions to a value, returning a new object
+ * with the same keys, where each value is the result of the corresponding function.
+ *
+ * @example
+ * ```ts
+ * import { pipe, Struct } from "effect"
+ *
+ * const result = pipe(
+ *   123,
+ *   Struct.map({
+ *     first: (n) => n + 2,
+ *     second: (n) => n * 2
+ *   })
+ * )
+ *
+ * // result: { first: 125, second: 246 }
+ * ```
+ */
+export const map: {
+	/**
+	 * Applies a struct of functions to a value, returning a new object
+	 * with the same keys, where each value is the result of the corresponding function.
+	 *
+	 * @example
+	 * ```ts
+	 * import { pipe, Struct } from "effect"
+	 *
+	 * const result = pipe(
+	 *   123,
+	 *   Struct.map({
+	 *     first: (n) => n + 2,
+	 *     second: (n) => n * 2
+	 *   })
+	 * )
+	 *
+	 * // result: { first: 125, second: 246 }
+	 * ```
+	 */
+	<T extends Record<string, (arg: any) => any>>(t: T): (self: MapInput<T>) => Mapped<T>
+
+	/**
+	 * Applies a struct of functions to a value, returning a new object
+	 * with the same keys, where each value is the result of the corresponding function.
+	 *
+	 * @example
+	 * ```ts
+	 * import { pipe, Struct } from "effect"
+	 *
+	 * const result = pipe(
+	 *   123,
+	 *   Struct.map({
+	 *     first: (n) => n + 2,
+	 *     second: (n) => n * 2
+	 *   })
+	 * )
+	 *
+	 * // result: { first: 125, second: 246 }
+	 * ```
+	 */
+	<T extends Record<string, (arg: any) => any>>(self: MapInput<T>, t: T): Mapped<T>
+} = Function.dual(
+	2,
+	<T extends Record<string, (arg: any) => any>>(self: any, t: T): Mapped<T> => {
+		const out: Partial<Mapped<T>> = {}
+
+		for (const k in t) {
+			if (Object.prototype.hasOwnProperty.call(t, k)) {
+				out[k] = t[k](self)
+			}
+		}
+
+		return out as Mapped<T>
+	}
+)
+
 /**
  * Retrieves the value associated with the specified key from a struct.
  *
